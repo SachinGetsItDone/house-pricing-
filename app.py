@@ -32,20 +32,66 @@ def load_dataset():
         st.stop()
 
 # Prepare input data
-def prepare_input(user_data, feature_cols, model):
+def prepare_input(user_data, feature_cols, model, df_original):
+    # Create dataframe from user input
     df = pd.DataFrame([user_data], columns=feature_cols)
     
-    # Convert all columns to appropriate types
-    for col in df.columns:
-        if df[col].dtype == 'object':
-            # Keep as string/object
-            df[col] = df[col].astype(str)
+    # Get categorical columns from original dataset
+    categorical_cols = df_original[feature_cols].select_dtypes(include=['object']).columns.tolist()
+    numerical_cols = df_original[feature_cols].select_dtypes(include=[np.number]).columns.tolist()
+    
+    # Convert numerical columns to float
+    for col in numerical_cols:
+        df[col] = pd.to_numeric(df[col], errors='coerce')
+    
+    # Create engineered features
+    # Log transformations
+    if 'LotArea' in df.columns:
+        df['LotArea_log'] = np.log1p(df['LotArea'])
+    if 'TotalBsmtSF' in df.columns:
+        df['TotalBsmtSF_log'] = np.log1p(df['TotalBsmtSF'])
+    
+    # CondGroup feature
+    if 'OverallCond' in df.columns:
+        cond_val = df['OverallCond'].iloc[0]
+        if cond_val <= 4:
+            df['CondGroup'] = 'Bad'
+        elif cond_val <= 6:
+            df['CondGroup'] = 'Average'
         else:
-            # Convert to float for numerical columns
-            try:
-                df[col] = pd.to_numeric(df[col], errors='coerce')
-            except:
-                pass
+            df['CondGroup'] = 'Good'
+    
+    # Cond_x_MSSubClass interaction
+    if 'OverallCond' in df.columns and 'MSSubClass' in df.columns:
+        df['Cond_x_MSSubClass'] = df['OverallCond'] * df['MSSubClass']
+    
+    # One-hot encode categorical variables
+    if categorical_cols:
+        df_categorical = pd.get_dummies(df[categorical_cols], drop_first=False)
+        df_numerical = df[numerical_cols].astype(float)
+        
+        # Add engineered features
+        engineered_features = []
+        if 'LotArea_log' in df.columns:
+            engineered_features.append('LotArea_log')
+        if 'TotalBsmtSF_log' in df.columns:
+            engineered_features.append('TotalBsmtSF_log')
+        if 'CondGroup' in df.columns:
+            engineered_features.append('CondGroup')
+        if 'Cond_x_MSSubClass' in df.columns:
+            engineered_features.append('Cond_x_MSSubClass')
+        
+        # Combine all features
+        df_combined = pd.concat([df_numerical, df[engineered_features], df_categorical], axis=1)
+        
+        # One-hot encode CondGroup if it exists
+        if 'CondGroup' in df_combined.columns:
+            condgroup_dummies = pd.get_dummies(df_combined['CondGroup'], prefix='CondGroup', drop_first=False)
+            df_combined = pd.concat([df_combined.drop('CondGroup', axis=1), condgroup_dummies], axis=1)
+        
+        df = df_combined
+    else:
+        df = df.astype(float)
     
     # Try to get model's expected features
     try:
@@ -58,28 +104,24 @@ def prepare_input(user_data, feature_cols, model):
     except:
         model_features = None
     
-    # If model expects different features, add missing columns
+    # If model expects different features, align columns
     if model_features is not None:
+        # Add missing columns with 0
         for col in model_features:
             if col not in df.columns:
                 df[col] = 0.0
         
-        # Reorder columns to match model's expected order
+        # Remove extra columns and reorder
         df = df[model_features]
     
-    # Ensure all values are numeric where expected
-    for col in df.columns:
-        if df[col].dtype == 'object':
-            try:
-                df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
-            except:
-                pass
+    # Final check: ensure all columns are numeric
+    df = df.apply(pd.to_numeric, errors='coerce').fillna(0)
     
     return df
 
 # Make prediction
-def predict_price(model, user_data, feature_cols):
-    input_df = prepare_input(user_data, feature_cols, model)
+def predict_price(model, user_data, feature_cols, df_original):
+    input_df = prepare_input(user_data, feature_cols, model, df_original)
     prediction = model.predict(input_df)
     return prediction[0]
 
@@ -204,7 +246,7 @@ def main():
         if predict_button:
             with st.spinner("Analyzing property..."):
                 try:
-                    prediction = predict_price(model, input_data, feature_cols)
+                    prediction = predict_price(model, input_data, feature_cols, df)
                     
                     st.markdown("<br>", unsafe_allow_html=True)
                     
