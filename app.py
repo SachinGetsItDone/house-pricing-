@@ -32,88 +32,47 @@ def load_dataset():
         st.stop()
 
 
-# Prepare input data
-def prepare_input(user_data, feature_cols, model, df_original):
-    # Create dataframe from user input
-    df = pd.DataFrame([user_data], columns=feature_cols)
+# Prepare input data to match the training pipeline
+def prepare_input(user_data):
+    """
+    Prepare input matching the model's expected features:
+    - LotArea_log
+    - TotalBsmtSF_log  
+    - YearBuilt
+    - YearRemodAdd
+    - MSZoning (categorical)
+    - LotConfig (categorical)
+    - BldgType (categorical)
+    - Exterior1st (categorical)
+    - CondGroup (categorical)
+    - Cond_x_MSSubClass (interaction term)
+    """
     
-    # Get categorical columns from original dataset
-    categorical_cols = df_original[feature_cols].select_dtypes(include=['object']).columns.tolist()
-    numerical_cols = df_original[feature_cols].select_dtypes(include=[np.number]).columns.tolist()
+    # Create the input dataframe with the exact columns the model expects
+    input_dict = {
+        'LotArea_log': user_data['LotArea_log'],
+        'TotalBsmtSF_log': user_data['TotalBsmtSF_log'],
+        'YearBuilt': user_data['YearBuilt'],
+        'YearRemodAdd': user_data['YearRemodAdd'],
+        'MSZoning': user_data['MSZoning'],
+        'LotConfig': user_data['LotConfig'],
+        'BldgType': user_data['BldgType'],
+        'Exterior1st': user_data['Exterior1st'],
+        'CondGroup': user_data['CondGroup'],
+        'Cond_x_MSSubClass': user_data['Cond_x_MSSubClass']
+    }
     
-    # Convert numerical columns to float first
-    df_numerical = df[numerical_cols].copy()
-    for col in df_numerical.columns:
-        df_numerical[col] = float(df_numerical[col].iloc[0])
-    
-    # Create engineered features
-    if 'LotArea' in df_numerical.columns:
-        df_numerical['LotArea_log'] = float(np.log1p(float(df_numerical['LotArea'].iloc[0])))
-    
-    if 'TotalBsmtSF' in df_numerical.columns:
-        df_numerical['TotalBsmtSF_log'] = float(np.log1p(float(df_numerical['TotalBsmtSF'].iloc[0])))
-    
-    # CondGroup feature
-    if 'OverallCond' in df_numerical.columns:
-        cond_val = float(df_numerical['OverallCond'].iloc[0])
-        if cond_val <= 4:
-            condgroup = 'Bad'
-        elif cond_val <= 6:
-            condgroup = 'Average'
-        else:
-            condgroup = 'Good'
-    else:
-        condgroup = 'Average'
-    
-    # Cond_x_MSSubClass interaction
-    if 'OverallCond' in df_numerical.columns and 'MSSubClass' in df_numerical.columns:
-        df_numerical['Cond_x_MSSubClass'] = float(df_numerical['OverallCond'].iloc[0]) * float(df_numerical['MSSubClass'].iloc[0])
-    
-    # One-hot encode categorical variables
-    if categorical_cols:
-        df_categorical = pd.get_dummies(df[categorical_cols], drop_first=False)
-        
-        # One-hot encode CondGroup
-        condgroup_df = pd.DataFrame([{
-            'CondGroup_Average': 1.0 if condgroup == 'Average' else 0.0,
-            'CondGroup_Bad': 1.0 if condgroup == 'Bad' else 0.0,
-            'CondGroup_Good': 1.0 if condgroup == 'Good' else 0.0
-        }])
-        
-        # Combine all features
-        df_final = pd.concat([df_numerical.reset_index(drop=True), condgroup_df.reset_index(drop=True), df_categorical.reset_index(drop=True)], axis=1)
-    else:
-        df_final = df_numerical
-    
-    # Try to get model's expected features
-    model_features = None
-    try:
-        if hasattr(model, 'feature_names_in_'):
-            model_features = list(model.feature_names_in_)
-    except:
-        pass
-    
-    # If model expects different features, align columns
-    if model_features is not None:
-        # Add missing columns with 0.0
-        for col in model_features:
-            if col not in df_final.columns:
-                df_final[col] = 0.0
-        
-        # Reorder to match model
-        df_final = df_final[model_features]
-    
-    # Convert all to float
-    for col in df_final.columns:
-        df_final[col] = float(df_final[col].iloc[0])
-    
-    return df_final
+    df = pd.DataFrame([input_dict])
+    return df
 
 # Make prediction
-def predict_price(model, user_data, feature_cols, df_original):
-    input_df = prepare_input(user_data, feature_cols, model, df_original)
-    prediction = model.predict(input_df)
-    return prediction[0]
+def predict_price(model, user_data):
+    input_df = prepare_input(user_data)
+    # Model predicts log price
+    pred_log = model.predict(input_df)
+    # Convert back to actual price
+    pred_price = np.expm1(pred_log[0])
+    return pred_price
 
 # App interface
 def main():
@@ -160,75 +119,131 @@ def main():
     model = load_model()
     df = load_dataset()
     
-    # Extract features
-    target_col = 'SalePrice'
-    feature_cols = [col for col in df.columns if col != target_col]
-    numerical_cols = df[feature_cols].select_dtypes(include=[np.number]).columns.tolist()
-    categorical_cols = df[feature_cols].select_dtypes(include=['object']).columns.tolist()
-    
     st.markdown("""
         <div class='info-box'>
-            ✅ <strong>Status:</strong> Model Ready | <strong>Features:</strong> {} Total ({} Numerical, {} Categorical)
+            ✅ <strong>Status:</strong> Model Ready | <strong>Algorithm:</strong> Ridge Regression with Polynomial Features
         </div>
-    """.format(len(feature_cols), len(numerical_cols), len(categorical_cols)), unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
     
     tab1, tab2 = st.tabs(["📝 Property Details", "ℹ️ About"])
     
     with tab1:
         input_data = {}
         
-        # Numerical Features Section
-        if numerical_cols:
-            st.markdown("<div class='section-header'>🔢 Numerical Features</div>", unsafe_allow_html=True)
-            
-            # Calculate columns needed
-            num_features = len(numerical_cols)
-            cols_per_row = 4
-            
-            for i in range(0, num_features, cols_per_row):
-                cols = st.columns(cols_per_row)
-                for j, col_name in enumerate(numerical_cols[i:i+cols_per_row]):
-                    min_val = float(df[col_name].min()) if not pd.isna(df[col_name].min()) else 0.0
-                    max_val = float(df[col_name].max()) if not pd.isna(df[col_name].max()) else 100.0
-                    mean_val = float(df[col_name].mean()) if not pd.isna(df[col_name].mean()) else (min_val + max_val) / 2
-                    
-                    with cols[j]:
-                        input_data[col_name] = st.number_input(
-                            f"{col_name}",
-                            min_value=min_val,
-                            max_value=max_val,
-                            value=mean_val,
-                            help=f"Range: {min_val:.2f} - {max_val:.2f}",
-                            key=f"num_{col_name}"
-                        )
+        st.markdown("<div class='section-header'>🏗️ Property Characteristics</div>", unsafe_allow_html=True)
         
-        # Categorical Features Section
-        if categorical_cols:
-            st.markdown("<div class='section-header'>📋 Categorical Features</div>", unsafe_allow_html=True)
-            
-            # Calculate columns needed
-            num_features = len(categorical_cols)
-            cols_per_row = 4
-            
-            for i in range(0, num_features, cols_per_row):
-                cols = st.columns(cols_per_row)
-                for j, col_name in enumerate(categorical_cols[i:i+cols_per_row]):
-                    unique_vals = df[col_name].dropna().unique().tolist()
-                    
-                    with cols[j]:
-                        if len(unique_vals) > 0:
-                            input_data[col_name] = st.selectbox(
-                                f"{col_name}",
-                                options=unique_vals,
-                                index=0,
-                                key=f"cat_{col_name}"
-                            )
-                        else:
-                            input_data[col_name] = st.text_input(
-                                f"{col_name}", 
-                                value="",
-                                key=f"text_{col_name}"
-                            )
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            lot_area = st.number_input(
+                "Lot Area (sq ft)",
+                min_value=1000,
+                max_value=200000,
+                value=10000,
+                step=100,
+                help="Size of the lot in square feet"
+            )
+            input_data['LotArea_log'] = np.log1p(lot_area)
+        
+        with col2:
+            bsmt_sf = st.number_input(
+                "Total Basement SF",
+                min_value=0,
+                max_value=6000,
+                value=1000,
+                step=50,
+                help="Total basement area in square feet"
+            )
+            input_data['TotalBsmtSF_log'] = np.log1p(bsmt_sf)
+        
+        with col3:
+            input_data['YearBuilt'] = st.number_input(
+                "Year Built",
+                min_value=1800,
+                max_value=2025,
+                value=2000,
+                step=1
+            )
+        
+        with col4:
+            input_data['YearRemodAdd'] = st.number_input(
+                "Year Remodeled",
+                min_value=1800,
+                max_value=2025,
+                value=2000,
+                step=1
+            )
+        
+        st.markdown("<div class='section-header'>📋 Property Details</div>", unsafe_allow_html=True)
+        
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            input_data['MSZoning'] = st.selectbox(
+                "Zoning Classification",
+                options=df['MSZoning'].dropna().unique().tolist(),
+                help="General zoning classification"
+            )
+        
+        with col2:
+            input_data['LotConfig'] = st.selectbox(
+                "Lot Configuration",
+                options=df['LotConfig'].dropna().unique().tolist(),
+                help="Lot configuration"
+            )
+        
+        with col3:
+            input_data['BldgType'] = st.selectbox(
+                "Building Type",
+                options=df['BldgType'].dropna().unique().tolist(),
+                help="Type of dwelling"
+            )
+        
+        with col4:
+            input_data['Exterior1st'] = st.selectbox(
+                "Exterior Covering",
+                options=df['Exterior1st'].dropna().unique().tolist(),
+                help="Exterior covering on house"
+            )
+        
+        st.markdown("<div class='section-header'>🏡 Condition & Quality</div>", unsafe_allow_html=True)
+        
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            overall_cond = st.slider(
+                "Overall Condition",
+                min_value=1,
+                max_value=10,
+                value=5,
+                help="Overall condition rating (1-10)"
+            )
+            # Create CondGroup based on OverallCond
+            if overall_cond <= 4:
+                input_data['CondGroup'] = 'Bad'
+            elif overall_cond <= 6:
+                input_data['CondGroup'] = 'Average'
+            else:
+                input_data['CondGroup'] = 'Good'
+        
+        with col2:
+            ms_subclass = st.number_input(
+                "MS SubClass",
+                min_value=20,
+                max_value=190,
+                value=60,
+                step=10,
+                help="Building class (type of dwelling)"
+            )
+        
+        with col3:
+            # Create interaction term
+            input_data['Cond_x_MSSubClass'] = overall_cond * ms_subclass
+            st.metric(
+                "Cond × SubClass",
+                f"{input_data['Cond_x_MSSubClass']}",
+                help="Interaction term between condition and subclass"
+            )
         
         st.markdown("<br>", unsafe_allow_html=True)
         predict_button = st.button("🔮 Predict House Price", type="primary", use_container_width=True)
@@ -236,7 +251,7 @@ def main():
         if predict_button:
             with st.spinner("Analyzing property..."):
                 try:
-                    prediction = predict_price(model, input_data, feature_cols, df)
+                    prediction = predict_price(model, input_data)
                     
                     st.markdown("<br>", unsafe_allow_html=True)
                     
@@ -261,40 +276,89 @@ def main():
                         st.metric("🏡 Confidence", "High")
                     
                     with st.expander("📋 View Input Summary"):
-                        col_s1, col_s2 = st.columns(2)
+                        st.markdown("**Property Features**")
                         
-                        with col_s1:
-                            st.markdown("**Numerical Features**")
-                            num_data = {k: v for k, v in input_data.items() if k in numerical_cols}
-                            if num_data:
-                                st.dataframe(pd.DataFrame([num_data]).T, use_container_width=True)
+                        summary_data = {
+                            'Lot Area': f"{lot_area:,} sq ft",
+                            'Total Basement SF': f"{bsmt_sf:,} sq ft",
+                            'Year Built': input_data['YearBuilt'],
+                            'Year Remodeled': input_data['YearRemodAdd'],
+                            'Zoning': input_data['MSZoning'],
+                            'Lot Config': input_data['LotConfig'],
+                            'Building Type': input_data['BldgType'],
+                            'Exterior': input_data['Exterior1st'],
+                            'Condition Group': input_data['CondGroup'],
+                            'MS SubClass': ms_subclass,
+                            'Overall Condition': overall_cond
+                        }
                         
-                        with col_s2:
-                            st.markdown("**Categorical Features**")
-                            cat_data = {k: v for k, v in input_data.items() if k in categorical_cols}
-                            if cat_data:
-                                st.dataframe(pd.DataFrame([cat_data]).T, use_container_width=True)
+                        st.dataframe(
+                            pd.DataFrame(list(summary_data.items()), columns=['Feature', 'Value']),
+                            use_container_width=True,
+                            hide_index=True
+                        )
                 
                 except Exception as e:
                     st.error(f"❌ Error making prediction: {e}")
                     st.write("Please ensure all inputs are valid and the model is compatible.")
+                    
+                    # Debug information
+                    with st.expander("🔍 Debug Information"):
+                        st.write("**Input Data:**")
+                        st.json(input_data)
+                        st.write("**Error Details:**")
+                        import traceback
+                        st.code(traceback.format_exc())
     
     with tab2:
         st.markdown("### ℹ️ About This App")
-        st.write("This tool uses machine learning to predict house prices based on property features.")
+        st.write("""
+        This tool uses a Ridge Regression model with polynomial features to predict house prices 
+        based on various property characteristics. The model was trained on historical housing data 
+        and uses feature engineering including log transformations and interaction terms.
+        """)
         
-        st.markdown("### 📊 Model Information")
-        st.write(f"- **Total Features**: {len(feature_cols)}")
-        st.write(f"- **Numerical Features**: {len(numerical_cols)}")
-        st.write(f"- **Categorical Features**: {len(categorical_cols)}")
-        st.write(f"- **Training Data**: {df.shape[0]} houses")
+        st.markdown("### 📊 Model Features")
+        st.write("""
+        **Numerical Features (with log transformation):**
+        - Lot Area
+        - Total Basement Square Footage
+        - Year Built
+        - Year Remodeled/Added
+        
+        **Categorical Features:**
+        - MS Zoning (General zoning classification)
+        - Lot Configuration
+        - Building Type
+        - Exterior Covering
+        - Condition Group (derived from Overall Condition)
+        
+        **Engineered Features:**
+        - Polynomial features (degree 2)
+        - Interaction term: Overall Condition × MS SubClass
+        """)
         
         st.markdown("### 🎯 How It Works")
-        st.write("1. Enter property details using the form")
-        st.write("2. Click 'Predict House Price' button")
-        st.write("3. View estimated price and confidence range")
+        st.write("""
+        1. Enter property details using the form
+        2. The app automatically:
+           - Applies log transformations to skewed features
+           - Creates the CondGroup category based on Overall Condition
+           - Calculates the interaction term
+           - Applies polynomial features and scaling (handled by the model)
+        3. Click 'Predict House Price' to get the estimated value
+        4. The model predicts the log of the sale price, which is converted back to the actual price
+        """)
         
-        st.markdown("### 📦 Requirements")
+        st.markdown("### 📦 Model Information")
+        st.write("""
+        - **Algorithm**: Ridge Regression (alpha=10.0)
+        - **Preprocessing**: PolynomialFeatures (degree=2) + StandardScaler
+        - **Target**: Log-transformed Sale Price
+        - **Categorical Encoding**: One-Hot Encoding (drop first)
+        """)
+        
+        st.markdown("### 📋 Requirements")
         st.write("Make sure your `requirements.txt` includes:")
         st.code("""streamlit
 pandas
