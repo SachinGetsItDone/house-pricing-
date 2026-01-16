@@ -40,84 +40,73 @@ def prepare_input(user_data, feature_cols, model, df_original):
     categorical_cols = df_original[feature_cols].select_dtypes(include=['object']).columns.tolist()
     numerical_cols = df_original[feature_cols].select_dtypes(include=[np.number]).columns.tolist()
     
-    # Convert numerical columns to float
-    for col in numerical_cols:
-        df[col] = pd.to_numeric(df[col], errors='coerce')
+    # Convert numerical columns to float first
+    df_numerical = df[numerical_cols].copy()
+    for col in df_numerical.columns:
+        df_numerical[col] = float(df_numerical[col].iloc[0])
     
     # Create engineered features
-    # Log transformations
-    if 'LotArea' in df.columns:
-        df['LotArea_log'] = np.log1p(df['LotArea'])
-    if 'TotalBsmtSF' in df.columns:
-        df['TotalBsmtSF_log'] = np.log1p(df['TotalBsmtSF'])
+    if 'LotArea' in df_numerical.columns:
+        df_numerical['LotArea_log'] = float(np.log1p(float(df_numerical['LotArea'].iloc[0])))
+    
+    if 'TotalBsmtSF' in df_numerical.columns:
+        df_numerical['TotalBsmtSF_log'] = float(np.log1p(float(df_numerical['TotalBsmtSF'].iloc[0])))
     
     # CondGroup feature
-    if 'OverallCond' in df.columns:
-        cond_val = df['OverallCond'].iloc[0]
+    if 'OverallCond' in df_numerical.columns:
+        cond_val = float(df_numerical['OverallCond'].iloc[0])
         if cond_val <= 4:
-            df['CondGroup'] = 'Bad'
+            condgroup = 'Bad'
         elif cond_val <= 6:
-            df['CondGroup'] = 'Average'
+            condgroup = 'Average'
         else:
-            df['CondGroup'] = 'Good'
+            condgroup = 'Good'
+    else:
+        condgroup = 'Average'
     
     # Cond_x_MSSubClass interaction
-    if 'OverallCond' in df.columns and 'MSSubClass' in df.columns:
-        df['Cond_x_MSSubClass'] = df['OverallCond'] * df['MSSubClass']
+    if 'OverallCond' in df_numerical.columns and 'MSSubClass' in df_numerical.columns:
+        df_numerical['Cond_x_MSSubClass'] = float(df_numerical['OverallCond'].iloc[0]) * float(df_numerical['MSSubClass'].iloc[0])
     
     # One-hot encode categorical variables
     if categorical_cols:
         df_categorical = pd.get_dummies(df[categorical_cols], drop_first=False)
-        df_numerical = df[numerical_cols].astype(float)
         
-        # Add engineered features
-        engineered_features = []
-        if 'LotArea_log' in df.columns:
-            engineered_features.append('LotArea_log')
-        if 'TotalBsmtSF_log' in df.columns:
-            engineered_features.append('TotalBsmtSF_log')
-        if 'CondGroup' in df.columns:
-            engineered_features.append('CondGroup')
-        if 'Cond_x_MSSubClass' in df.columns:
-            engineered_features.append('Cond_x_MSSubClass')
+        # One-hot encode CondGroup
+        condgroup_df = pd.DataFrame([{
+            'CondGroup_Average': 1.0 if condgroup == 'Average' else 0.0,
+            'CondGroup_Bad': 1.0 if condgroup == 'Bad' else 0.0,
+            'CondGroup_Good': 1.0 if condgroup == 'Good' else 0.0
+        }])
         
         # Combine all features
-        df_combined = pd.concat([df_numerical, df[engineered_features], df_categorical], axis=1)
-        
-        # One-hot encode CondGroup if it exists
-        if 'CondGroup' in df_combined.columns:
-            condgroup_dummies = pd.get_dummies(df_combined['CondGroup'], prefix='CondGroup', drop_first=False)
-            df_combined = pd.concat([df_combined.drop('CondGroup', axis=1), condgroup_dummies], axis=1)
-        
-        df = df_combined
+        df_final = pd.concat([df_numerical.reset_index(drop=True), condgroup_df.reset_index(drop=True), df_categorical.reset_index(drop=True)], axis=1)
     else:
-        df = df.astype(float)
+        df_final = df_numerical
     
     # Try to get model's expected features
+    model_features = None
     try:
         if hasattr(model, 'feature_names_in_'):
-            model_features = model.feature_names_in_
-        elif hasattr(model, 'get_feature_names_out'):
-            model_features = model.get_feature_names_out()
-        else:
-            model_features = None
+            model_features = list(model.feature_names_in_)
     except:
-        model_features = None
+        pass
     
     # If model expects different features, align columns
     if model_features is not None:
-        # Add missing columns with 0
+        # Add missing columns with 0.0
         for col in model_features:
-            if col not in df.columns:
-                df[col] = 0.0
+            if col not in df_final.columns:
+                df_final[col] = 0.0
         
-        # Remove extra columns and reorder
-        df = df[model_features]
+        # Reorder to match model
+        df_final = df_final[model_features]
     
-    # Final check: ensure all columns are numeric
-    df = df.apply(pd.to_numeric, errors='coerce').fillna(0)
+    # Convert all to float
+    for col in df_final.columns:
+        df_final[col] = float(df_final[col].iloc[0])
     
-    return df
+    return df_final
 
 # Make prediction
 def predict_price(model, user_data, feature_cols, df_original):
