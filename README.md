@@ -1,80 +1,39 @@
-🏠 House Price Prediction using Linear Models
+🏠 House Price Prediction (Linear Models)
 
-This project builds a machine learning pipeline to predict house prices using linear regression–based models.
-The goal is not just accuracy, but correct preprocessing, modeling discipline, and interpretability.
+A machine learning project focused on correct preprocessing, linear modeling, and regularization for house price prediction.
 
-📌 Problem Statement
+This project emphasizes methodology over raw accuracy, following best practices used in real-world ML pipelines.
 
-Predict house sale prices based on structural, temporal, and categorical features using linear regression, and analyze model performance, limitations, and improvements using regularization.
+🔍 Problem
 
-🧠 Approach Overview
+Predict house sale prices using structural, temporal, and categorical features while analyzing the limitations of linear models.
 
-The project follows a proper ML workflow:
+🧠 Approach
 
 Exploratory Data Analysis (EDA)
 
-Feature engineering
+Log transformation for skewed features
 
-Handling categorical variables
+One-Hot Encoding for categorical variables
 
-Feature scaling
+Feature scaling with StandardScaler
 
 Baseline Linear Regression
 
-Ridge & Lasso Regularization
+Regularization using Ridge and Lasso
 
 Polynomial feature expansion
 
-Pipeline construction
+End-to-end scikit-learn Pipeline
 
-Model serialization (pickle)
+Model serialization with pickle
 
-🛠️ Feature Engineering
-Numerical Features
+🛠️ Tech Stack
 
-LotArea_log
+Python
 
-TotalBsmtSF_log
+pandas, NumPy
 
-YearBuilt
+scikit-learn
 
-YearRemodAdd
-
-(Log transformation applied to handle skewness.)
-
-Categorical Features (One-Hot Encoded)
-
-MSZoning
-
-LotConfig
-
-BldgType
-
-Exterior1st
-
-CondGroup
-
-🔄 Preprocessing Pipeline
-
-PolynomialFeatures (degree=2) for numerical variables
-
-StandardScaler for numeric scaling
-
-OneHotEncoder for categorical variables
-
-ColumnTransformer to apply transformations correctly
-
-🤖 Models Used
-1️⃣ Linear Regression (Baseline)
-
-Used to establish baseline performance
-
-Diagnosed underfitting
-
-2️⃣ Ridge Regression (Final Model)
-
-Handles multicollinearity
-
-Improves coefficient stability
-
-Best regularization parameter found via cross-validation
+seaborn, matplotlib
