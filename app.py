@@ -35,6 +35,18 @@ def load_dataset():
 def prepare_input(user_data, feature_cols, model):
     df = pd.DataFrame([user_data], columns=feature_cols)
     
+    # Convert all columns to appropriate types
+    for col in df.columns:
+        if df[col].dtype == 'object':
+            # Keep as string/object
+            df[col] = df[col].astype(str)
+        else:
+            # Convert to float for numerical columns
+            try:
+                df[col] = pd.to_numeric(df[col], errors='coerce')
+            except:
+                pass
+    
     # Try to get model's expected features
     try:
         if hasattr(model, 'feature_names_in_'):
@@ -50,10 +62,18 @@ def prepare_input(user_data, feature_cols, model):
     if model_features is not None:
         for col in model_features:
             if col not in df.columns:
-                df[col] = 0
+                df[col] = 0.0
         
         # Reorder columns to match model's expected order
         df = df[model_features]
+    
+    # Ensure all values are numeric where expected
+    for col in df.columns:
+        if df[col].dtype == 'object':
+            try:
+                df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+            except:
+                pass
     
     return df
 
