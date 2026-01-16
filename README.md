@@ -4,7 +4,7 @@
 
 - Built an end-to-end regression pipeline to predict house sale prices using structured real-estate data
 
-= Performed Exploratory Data Analysis (EDA) to identify feature distributions, correlations, and skewness
+ -Performed Exploratory Data Analysis (EDA) to identify feature distributions, correlations, and skewness
 
 - Applied feature engineering techniques including log transformation, One-Hot Encoding, and feature scaling
 
