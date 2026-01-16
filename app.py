@@ -32,13 +32,34 @@ def load_dataset():
         st.stop()
 
 # Prepare input data
-def prepare_input(user_data, feature_cols):
+def prepare_input(user_data, feature_cols, model):
     df = pd.DataFrame([user_data], columns=feature_cols)
+    
+    # Try to get model's expected features
+    try:
+        if hasattr(model, 'feature_names_in_'):
+            model_features = model.feature_names_in_
+        elif hasattr(model, 'get_feature_names_out'):
+            model_features = model.get_feature_names_out()
+        else:
+            model_features = None
+    except:
+        model_features = None
+    
+    # If model expects different features, add missing columns
+    if model_features is not None:
+        for col in model_features:
+            if col not in df.columns:
+                df[col] = 0
+        
+        # Reorder columns to match model's expected order
+        df = df[model_features]
+    
     return df
 
 # Make prediction
 def predict_price(model, user_data, feature_cols):
-    input_df = prepare_input(user_data, feature_cols)
+    input_df = prepare_input(user_data, feature_cols, model)
     prediction = model.predict(input_df)
     return prediction[0]
 
