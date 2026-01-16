@@ -104,7 +104,7 @@ h1 {
 }
 
 .result-glass {
-    background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.3) 0%, rgba(118, 75, 162, 0.3) 100%);
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
     border: 1px solid rgba(255, 255, 255, 0.35);
@@ -118,9 +118,8 @@ h1 {
 .price-text {
     font-size: 3.5rem;
     font-weight: 800;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    color: #ffffff;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
     margin: 1rem 0;
 }
 
@@ -167,10 +166,10 @@ label {
 }
 
 .metric-glass {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.3);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.4);
     border-radius: 12px;
     padding: 1.5rem;
     text-align: center;
@@ -281,7 +280,7 @@ if predict_button:
             
             st.markdown(f"""
                 <div class='result-glass'>
-                    <h2 style='color: #333; font-weight: 700; margin: 0;'>Predicted House Price</h2>
+                    <h2 style='color: #ffffff; font-weight: 700; margin: 0; text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);'>Predicted House Price</h2>
                     <div class='price-text'>${prediction:,.2f}</div>
                 </div>
             """, unsafe_allow_html=True)
@@ -294,24 +293,24 @@ if predict_button:
             with col1:
                 st.markdown(f"""
                     <div class='metric-glass'>
-                        <div style='font-size: 1.5rem; font-weight: 700; color: #333;'>${prediction:,.0f}</div>
-                        <div style='font-size: 0.9rem; color: #666; margin-top: 0.5rem;'>ESTIMATED VALUE</div>
+                        <div style='font-size: 1.5rem; font-weight: 700; color: #ffffff; text-shadow: 0 1px 5px rgba(0, 0, 0, 0.5);'>${prediction:,.0f}</div>
+                        <div style='font-size: 0.9rem; color: #ffffff; margin-top: 0.5rem; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);'>ESTIMATED VALUE</div>
                     </div>
                 """, unsafe_allow_html=True)
             
             with col2:
                 st.markdown(f"""
                     <div class='metric-glass'>
-                        <div style='font-size: 1.5rem; font-weight: 700; color: #333;'>${price_range_low:,.0f} - ${price_range_high:,.0f}</div>
-                        <div style='font-size: 0.9rem; color: #666; margin-top: 0.5rem;'>PRICE RANGE (±5%)</div>
+                        <div style='font-size: 1.5rem; font-weight: 700; color: #ffffff; text-shadow: 0 1px 5px rgba(0, 0, 0, 0.5);'>${price_range_low:,.0f} - ${price_range_high:,.0f}</div>
+                        <div style='font-size: 0.9rem; color: #ffffff; margin-top: 0.5rem; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);'>PRICE RANGE (±5%)</div>
                     </div>
                 """, unsafe_allow_html=True)
             
             with col3:
                 st.markdown(f"""
                     <div class='metric-glass'>
-                        <div style='font-size: 1.5rem; font-weight: 700; color: #333;'>High</div>
-                        <div style='font-size: 0.9rem; color: #666; margin-top: 0.5rem;'>CONFIDENCE</div>
+                        <div style='font-size: 1.5rem; font-weight: 700; color: #ffffff; text-shadow: 0 1px 5px rgba(0, 0, 0, 0.5);'>High</div>
+                        <div style='font-size: 0.9rem; color: #ffffff; margin-top: 0.5rem; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);'>CONFIDENCE</div>
                     </div>
                 """, unsafe_allow_html=True)
         
