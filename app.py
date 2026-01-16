@@ -15,7 +15,7 @@ def load_model():
         st.stop()
     except Exception as e:
         st.error(f"⚠️ Error loading model: {e}")
-        st.info("💡 Make sure 'house_price_model.pkl' is in the same directory as app.py")
+        st.info("💡 Make sure 'house_price_model.pkl' is in the same directory as app.py and scikit-learn is installed")
         st.stop()
 
 # Load dataset for feature extraction
@@ -102,50 +102,60 @@ def main():
     tab1, tab2 = st.tabs(["📝 Property Details", "ℹ️ About"])
     
     with tab1:
-        col1, col2 = st.columns(2, gap="large")
-        
         input_data = {}
         
-        with col1:
+        # Numerical Features Section
+        if numerical_cols:
             st.markdown("<div class='section-header'>🔢 Numerical Features</div>", unsafe_allow_html=True)
             
-            # Split numerical features into two columns
-            mid_point = len(numerical_cols) // 2
-            col1a, col1b = st.columns(2)
+            # Calculate columns needed
+            num_features = len(numerical_cols)
+            cols_per_row = 4
             
-            for idx, col in enumerate(numerical_cols):
-                min_val = float(df[col].min()) if not pd.isna(df[col].min()) else 0.0
-                max_val = float(df[col].max()) if not pd.isna(df[col].max()) else 100.0
-                mean_val = float(df[col].mean()) if not pd.isna(df[col].mean()) else (min_val + max_val) / 2
-                
-                with col1a if idx < mid_point else col1b:
-                    input_data[col] = st.number_input(
-                        f"📊 {col}",
-                        min_value=min_val,
-                        max_value=max_val,
-                        value=mean_val,
-                        help=f"Range: {min_val:.2f} - {max_val:.2f}"
-                    )
+            for i in range(0, num_features, cols_per_row):
+                cols = st.columns(cols_per_row)
+                for j, col_name in enumerate(numerical_cols[i:i+cols_per_row]):
+                    min_val = float(df[col_name].min()) if not pd.isna(df[col_name].min()) else 0.0
+                    max_val = float(df[col_name].max()) if not pd.isna(df[col_name].max()) else 100.0
+                    mean_val = float(df[col_name].mean()) if not pd.isna(df[col_name].mean()) else (min_val + max_val) / 2
+                    
+                    with cols[j]:
+                        input_data[col_name] = st.number_input(
+                            f"{col_name}",
+                            min_value=min_val,
+                            max_value=max_val,
+                            value=mean_val,
+                            help=f"Range: {min_val:.2f} - {max_val:.2f}",
+                            key=f"num_{col_name}"
+                        )
         
-        with col2:
+        # Categorical Features Section
+        if categorical_cols:
             st.markdown("<div class='section-header'>📋 Categorical Features</div>", unsafe_allow_html=True)
             
-            # Split categorical features into two columns
-            mid_point = len(categorical_cols) // 2
-            col2a, col2b = st.columns(2)
+            # Calculate columns needed
+            num_features = len(categorical_cols)
+            cols_per_row = 4
             
-            for idx, col in enumerate(categorical_cols):
-                unique_vals = df[col].dropna().unique().tolist()
-                
-                with col2a if idx < mid_point else col2b:
-                    if len(unique_vals) > 0:
-                        input_data[col] = st.selectbox(
-                            f"🏷️ {col}",
-                            options=unique_vals,
-                            index=0
-                        )
-                    else:
-                        input_data[col] = st.text_input(f"🏷️ {col}", value="")
+            for i in range(0, num_features, cols_per_row):
+                cols = st.columns(cols_per_row)
+                for j, col_name in enumerate(categorical_cols[i:i+cols_per_row]):
+                    unique_vals = df[col_name].dropna().unique().tolist()
+                    
+                    with cols[j]:
+                        if len(unique_vals) > 0:
+                            input_data[col_name] = st.selectbox(
+                                f"{col_name}",
+                                options=unique_vals,
+                                index=0,
+                                key=f"cat_{col_name}"
+                            )
+                        else:
+                            input_data[col_name] = st.text_input(
+                                f"{col_name}", 
+                                value="",
+                                key=f"text_{col_name}"
+                            )
         
         st.markdown("<br>", unsafe_allow_html=True)
         predict_button = st.button("🔮 Predict House Price", type="primary", use_container_width=True)
@@ -183,12 +193,14 @@ def main():
                         with col_s1:
                             st.markdown("**Numerical Features**")
                             num_data = {k: v for k, v in input_data.items() if k in numerical_cols}
-                            st.dataframe(pd.DataFrame([num_data]).T, use_container_width=True)
+                            if num_data:
+                                st.dataframe(pd.DataFrame([num_data]).T, use_container_width=True)
                         
                         with col_s2:
                             st.markdown("**Categorical Features**")
                             cat_data = {k: v for k, v in input_data.items() if k in categorical_cols}
-                            st.dataframe(pd.DataFrame([cat_data]).T, use_container_width=True)
+                            if cat_data:
+                                st.dataframe(pd.DataFrame([cat_data]).T, use_container_width=True)
                 
                 except Exception as e:
                     st.error(f"❌ Error making prediction: {e}")
@@ -208,6 +220,13 @@ def main():
         st.write("1. Enter property details using the form")
         st.write("2. Click 'Predict House Price' button")
         st.write("3. View estimated price and confidence range")
+        
+        st.markdown("### 📦 Requirements")
+        st.write("Make sure your `requirements.txt` includes:")
+        st.code("""streamlit
+pandas
+numpy
+scikit-learn""")
 
 if __name__ == "__main__":
     main()
