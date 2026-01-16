@@ -61,8 +61,7 @@ html, body, [class*="css"] {
 }
 
 .stApp {
-    background: linear-gradient(135deg, rgba(253, 251, 251, 0.9) 0%, rgba(246, 213, 184, 0.9) 50%, rgba(255, 236, 210, 0.9) 100%),
-                url('https://github.com/SachinGetsItDone/house-pricing-/raw/main/house.webp');
+    background-image: url('https://github.com/SachinGetsItDone/house-pricing-/raw/main/house.webp');
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
@@ -92,7 +91,7 @@ h1 {
 }
 
 .glass-container {
-    
+    background: rgba(255, 255, 255, 0.15);
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
     border: 1px solid rgba(255, 255, 255, 0.25);
