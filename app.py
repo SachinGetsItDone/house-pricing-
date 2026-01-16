@@ -61,7 +61,7 @@ html, body, [class*="css"] {
 }
 
 .stApp {
-    background-image: url('https://github.com/SachinGetsItDone/house-pricing-/raw/main/house.webp');
+    background-image: url('https://github.com/SachinGetsItDone/house-pricing-/raw/main/house%201.jpg');
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
@@ -77,24 +77,26 @@ h1 {
     font-size: 4rem;
     font-weight: 800;
     text-align: center;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     margin-bottom: 0.5rem;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 
 .subtitle {
     text-align: center;
     font-size: 1.3rem;
-    color: #666;
+    color: #ffffff;
     margin-bottom: 3rem;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
 }
 
 .glass-container {
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.25);
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
-    border: 1px solid rgba(255, 255, 255, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.35);
     border-radius: 20px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
     padding: 2.5rem;
@@ -125,10 +127,10 @@ h1 {
 .section-header {
     font-size: 1.5rem;
     font-weight: 700;
-    color: #333;
+    color: #ffffff;
     margin-bottom: 1.5rem;
     padding-bottom: 0.75rem;
-    border-bottom: 2px solid rgba(102, 126, 234, 0.3);
+    border-bottom: 2px solid rgba(255, 255, 255, 0.4);
 }
 
 .stButton > button {
@@ -150,16 +152,18 @@ h1 {
 }
 
 .stNumberInput input, .stSelectbox div[data-baseweb="select"] > div {
-    background: rgba(255, 255, 255, 0.4) !important;
+    background: rgba(255, 255, 255, 0.9) !important;
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
-    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    border: 1px solid rgba(255, 255, 255, 0.5) !important;
     border-radius: 12px !important;
+    color: #333 !important;
 }
 
 label {
     font-weight: 600 !important;
-    color: #444 !important;
+    color: #ffffff !important;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .metric-glass {
