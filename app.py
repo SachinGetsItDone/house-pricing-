@@ -61,7 +61,11 @@ html, body, [class*="css"] {
 }
 
 .stApp {
-    background: linear-gradient(135deg, #fdfbfb 0%, #f6d5b8 50%, #ffecd2 100%);
+    background: linear-gradient(135deg, rgba(253, 251, 251, 0.9) 0%, rgba(246, 213, 184, 0.9) 50%, rgba(255, 236, 210, 0.9) 100%),
+                url('https://github.com/SachinGetsItDone/house-pricing-/raw/main/house.webp');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
 }
 
 .block-container {
@@ -313,10 +317,10 @@ if predict_button:
 
 st.markdown("""
     <div class='footer-glass'>
-        <div class='footer-text'>Built by Sachin</div>
+        <div class='footer-text'>Built by Hitesh Kumar and Sachin Sharma</div>
         <div class='footer-links'>
-            <a href='#'>GitHub</a>
-            <a href='#'>LinkedIn</a>
+            <a href='https://github.com/SachinGetsItDone' target='_blank'>GitHub</a>
+            <a href='https://www.linkedin.com/in/sachin-sharma-898504340' target='_blank'>LinkedIn</a>
         </div>
     </div>
 """, unsafe_allow_html=True)
