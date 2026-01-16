@@ -30,6 +30,8 @@ def load_dataset():
     except Exception as e:
         st.error(f"⚠️ Error loading dataset: {e}")
         st.stop()
+input_df = input_df.apply(pd.to_numeric, errors="coerce")
+input_df = input_df.fillna(0)
 
 # Prepare input data
 def prepare_input(user_data, feature_cols, model, df_original):
