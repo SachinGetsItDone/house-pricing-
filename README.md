@@ -1,39 +1,21 @@
-🏠 House Price Prediction (Linear Models)
+🏠 House Price Prediction | Machine Learning Project
 
-A machine learning project focused on correct preprocessing, linear modeling, and regularization for house price prediction.
+Technologies: Python, Pandas, NumPy, Scikit-learn, Matplotlib, Seaborn
 
-This project emphasizes methodology over raw accuracy, following best practices used in real-world ML pipelines.
+Built an end-to-end regression pipeline to predict house sale prices using structured real-estate data
 
-🔍 Problem
+Performed Exploratory Data Analysis (EDA) to identify feature distributions, correlations, and skewness
 
-Predict house sale prices using structural, temporal, and categorical features while analyzing the limitations of linear models.
+Applied feature engineering techniques including log transformation, One-Hot Encoding, and feature scaling
 
-🧠 Approach
+Implemented and evaluated Linear Regression, Ridge, and Lasso models to study bias–variance trade-off
 
-Exploratory Data Analysis (EDA)
+Used polynomial feature expansion to capture non-linear relationships while controlling overfitting
 
-Log transformation for skewed features
+Designed a scikit-learn Pipeline to prevent data leakage and ensure reproducibility
 
-One-Hot Encoding for categorical variables
+Evaluated models using R², MAE, MSE, and RMSE metrics
 
-Feature scaling with StandardScaler
+Improved generalization performance through regularization techniques
 
-Baseline Linear Regression
-
-Regularization using Ridge and Lasso
-
-Polynomial feature expansion
-
-End-to-end scikit-learn Pipeline
-
-Model serialization with pickle
-
-🛠️ Tech Stack
-
-Python
-
-pandas, NumPy
-
-scikit-learn
-
-seaborn, matplotlib
+Serialized trained models using pickle for deployment readiness
