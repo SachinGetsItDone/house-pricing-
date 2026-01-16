@@ -213,6 +213,16 @@ st.markdown("<h1>House Price Predictor</h1>", unsafe_allow_html=True)
 st.markdown("<p class='subtitle'>AI-powered real estate valuation with advanced machine learning</p>", unsafe_allow_html=True)
 
 st.markdown("<div class='glass-container'>", unsafe_allow_html=True)
+st.markdown("""
+    <div style='text-align: center; margin-bottom: 2rem;'>
+        <div style='font-size: 1.8rem; font-weight: 700; color: #ffffff; text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5); margin-bottom: 0.5rem;'>
+            Enter Property Information
+        </div>
+        <div style='font-size: 1rem; color: #e0e0e0; text-shadow: 0 1px 5px rgba(0, 0, 0, 0.5);'>
+            Fill in the details below to get an accurate price prediction powered by machine learning
+        </div>
+    </div>
+""", unsafe_allow_html=True)
 st.markdown("<div class='section-header'>Property Details</div>", unsafe_allow_html=True)
 
 input_data = {}
