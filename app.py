@@ -11,7 +11,11 @@ def load_model():
             model = pickle.load(f)
         return model
     except FileNotFoundError:
-        st.error("⚠️ Model file not found.")
+        st.error("⚠️ Model file 'house_price_model.pkl' not found. Please upload the model file.")
+        st.stop()
+    except Exception as e:
+        st.error(f"⚠️ Error loading model: {e}")
+        st.info("💡 Make sure 'house_price_model.pkl' is in the same directory as app.py")
         st.stop()
 
 # Load dataset for feature extraction
@@ -21,7 +25,10 @@ def load_dataset():
         df = pd.read_csv('HousePricePrediction.csv')
         return df
     except FileNotFoundError:
-        st.error("⚠️ Dataset file not found.")
+        st.error("⚠️ Dataset file 'HousePricePrediction.csv' not found. Please upload the dataset.")
+        st.stop()
+    except Exception as e:
+        st.error(f"⚠️ Error loading dataset: {e}")
         st.stop()
 
 # Prepare input data
